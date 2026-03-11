@@ -1,5 +1,5 @@
 ---
-pagetitle: "Your Project Title"
+pagetitle: "F1Tenth Autonomous Racing Stack"
 format:
   html:
     toc: false
@@ -8,33 +8,29 @@ format:
 
 ::: {.hero-section}
 
-# Your Project Title Here {.title}
+# F1Tenth Autonomous Racing Stack {.title}
 
 ::: {.subtitle}
-A catchy one-line description of your project
+Full-stack autonomous racing with on-the-fly SLAM, raceline optimization, and visual-inertial odometry
 :::
 
 ::: {.author-list}
 
-[**Author One**](https://example.com)^1^,
-[**Author Two**](https://example.com)^2^,
-[**Author Three**](https://example.com)^1,2^
+[**Ravi Girish**](https://github.com/thebirdgr)^1^,
+[**Teammate 2**](https://example.com)^1^,
+[**Teammate 3**](https://example.com)^1^
 
 :::
 
 ::: {.affiliation-list}
 
-^1^University Name,  ^2^Research Lab / Company
+^1^University of Illinois Urbana-Champaign — ECE 484: Robot Perception
 
 :::
 
 ::: {.button-row}
 
-[[{{< fa file-pdf >}} Paper]{.btn-text}](https://arxiv.org/pdf/XXXX.XXXXX){.btn .btn-primary}
-[[{{< fa brands arxiv >}} arXiv]{.btn-text}](https://arxiv.org/abs/XXXX.XXXXX){.btn .btn-primary}
-[[{{< fa video >}} Video]{.btn-text}](https://www.youtube.com/watch?v=cSQTZoZPJzs){.btn .btn-primary}
-[[{{< fa brands github >}} Code]{.btn-text}](https://github.com/){.btn .btn-primary}
-[[{{< fa database >}} Data]{.btn-text}](https://example.com){.btn .btn-primary}
+[[{{< fa brands github >}} Code]{.btn-text}](https://github.com/thebirdgr){.btn .btn-primary}
 
 :::
 
@@ -50,7 +46,7 @@ A catchy one-line description of your project
 ::: {.hero-teaser}
 
 <!-- Option A: Use a static image as the teaser -->
-![Teaser figure showing your method overview or key result.](static/images/placeholder-teaser.svg){.teaser-img}
+![System overview: disparity extender reactive control during the mapping lap (left), pure pursuit on the optimized raceline during race laps (right).](static/images/placeholder-teaser.svg){.teaser-img}
 
 <!-- Option B: Embed a video teaser (uncomment below, comment out image above)
 {{< video static/videos/teaser.mp4 >}}
@@ -70,16 +66,7 @@ A catchy one-line description of your project
 ## Abstract {.section-title}
 
 ::: {.abstract-text}
-Replace this text with your project abstract. Describe the problem you are
-solving, the key insight or contribution of your work, and the main results.
-Keep it concise — typically 150–250 words. You can use **bold** and *italic*
-formatting to emphasize key terms.
-
-For example: We present a novel approach to [task] that achieves
-state-of-the-art results on [benchmark]. Our method leverages [key technique]
-to overcome [limitation of prior work]. Experiments demonstrate that our
-approach outperforms existing methods by [metric improvement] while requiring
-[efficiency gain].
+We present a full autonomous racing stack for the F1Tenth platform targeting competitive lap times on unknown tracks. The core challenge is that the track layout is not known ahead of time, requiring the vehicle to simultaneously build a map and navigate safely before switching to an optimized racing strategy. Our approach uses a two-phase pipeline: during the first lap, a **disparity extender** reactive controller safely navigates the unknown track while **slam_toolbox** builds a 2D occupancy map in the background. Once the map is complete, we switch to **AMCL localization** against the saved map and execute **pure pursuit** on a minimum-curvature raceline computed offline using a quadratic programming formulation. Velocity at each waypoint is optimized subject to friction circle and actuator constraints using **CVXPY**. As the primary ECE 484 contribution, we evaluate **visual-inertial odometry** (OpenVINS on the Intel RealSense D435i) as an alternative and complementary localization modality to LiDAR, measuring pose drift, failure modes at speed, and the benefit of EKF fusion of both sources. Our system runs fully on ROS2 Humble with a Hokuyo UST-10LX LiDAR and RealSense D435i camera.
 :::
 
 :::
@@ -95,7 +82,33 @@ approach outperforms existing methods by [metric improvement] while requiring
 
 ::: {.video-container}
 <!-- Replace with your YouTube or local video embed -->
-{{< video https://www.youtube.com/embed/cSQTZoZPJzs >}}
+{{< video static/videos/simulation_wall_follow.webm >}}
+:::
+
+:::
+
+
+<!-- ============================================================ -->
+<!-- WORKFLOW -->
+<!-- ============================================================ -->
+
+::: {.section-container}
+
+## Development Workflow {.section-title}
+
+::: {.content-text}
+
+Our development follows three sequential stages, each building on the last:
+
+**Stage 1 — SLAM Validation**
+Run slam_toolbox in online async mode while the disparity extender drives a mapping lap. Verify loop closure by inspecting the saved occupancy grid. Key checks: map resolution (0.05 m/cell), wall continuity, and absence of ghost walls from poor scan matching. Once the map is clean and consistent across multiple mapping runs, we lock it and move to Stage 2.
+
+**Stage 2 — Raceline Optimization**
+Extract the track centerline from the saved `.pgm` map using contour detection. Feed the centerline waypoints into the minimum-curvature QP optimizer to generate the raceline. Then solve the CVXPY velocity profile subject to lateral acceleration limits ($v^2 \kappa \leq \mu g$) and actuator constraints. Validate by overlaying the raceline on the map and checking that all waypoints stay within track boundaries with sufficient clearance.
+
+**Stage 3 — Controller Tuning**
+Load the saved map, initialize AMCL localization, and run pure pursuit on the optimized raceline. Tune the lookahead distance (speed-adaptive: $L = k \cdot v$), the velocity profile scaling factor, and the PID gains for longitudinal speed control. Iterate on lap time vs. crash rate. Stretch goal: replace pure pursuit with MPCC using acados for online trajectory optimization.
+
 :::
 
 :::
@@ -110,24 +123,7 @@ approach outperforms existing methods by [metric improvement] while requiring
 ## Results {.section-title}
 
 ::: {.content-text}
-Provide a brief description of the results shown below. Explain what the
-reader should observe and why it matters.
-:::
-
-::: {.results-grid}
-
-::: {.result-card}
-![Result 1 caption](static/images/placeholder-result1.svg)
-:::
-
-::: {.result-card}
-![Result 2 caption](static/images/placeholder-result2.svg)
-:::
-
-::: {.result-card}
-![Result 3 caption](static/images/placeholder-result3.svg)
-:::
-
+*Results coming soon — currently in Stage 1 (SLAM validation).*
 :::
 
 :::
@@ -142,60 +138,70 @@ reader should observe and why it matters.
 ## Qualitative Comparisons {.section-title}
 
 ::: {.content-text}
-Describe the comparison setup — which baselines are you comparing against, and
-what should the reader look for in the side-by-side results.
-:::
-
-::: {.comparison-grid}
-
-::: {.comparison-item}
-![Ours](static/images/placeholder-ours.svg)
-
-**Ours**
-:::
-
-::: {.comparison-item}
-![Baseline A](static/images/placeholder-baseline.svg)
-
-**Baseline A**
-:::
-
+*Comparisons coming soon — LiDAR AMCL vs. OpenVINS VIO localization at speed.*
 :::
 
 :::
 
 
 <!-- ============================================================ -->
-<!-- INTERACTIVE SLIDER (Optional) -->
+<!-- SYSTEM OVERVIEW -->
 <!-- ============================================================ -->
 
 ::: {.section-container}
 
-## Interpolation Demo {.section-title}
+## System Overview {.section-title}
 
 ::: {.content-text}
-If your method supports interpolation or continuous control, you can add an
-interactive slider here. The example below shows how to set one up.
+
+Our stack operates in two phases:
+
+**Phase 1 — Explore (Lap 1):** The disparity extender identifies the largest free gap in the 270° LiDAR scan, extends obstacle boundaries by the car's half-width to prevent wall hugging, and steers toward the gap midpoint. slam_toolbox runs concurrently in online async mode to build a 2D occupancy map. Once loop closure is detected, the map is saved.
+
+**Phase 2 — Exploit (Lap 2+):** AMCL localizes the car against the saved map. The centerline is extracted from the occupancy grid and passed to a minimum-curvature QP optimizer to generate a raceline. A CVXPY velocity profile enforces lateral acceleration limits ($v^2 \kappa \leq \mu g$) and actuator constraints at each waypoint. Pure pursuit tracks this raceline with speed-adaptive lookahead distance.
+
+**Sensors:** Hokuyo UST-10LX (270° FOV, 40Hz) · Intel RealSense D435i (RGB-D + IMU)
+
+**Software:** ROS2 Humble · slam_toolbox · nav2 AMCL · robot_localization · OpenVINS · CVXPY
+
 :::
 
-::: {.interpolation-panel}
-
-::: {.interpolation-endpoints}
-![Start](static/images/placeholder-start.svg){.endpoint-img}
-
-![End](static/images/placeholder-end.svg){.endpoint-img}
 :::
 
-<input type="range" min="0" max="100" value="50" class="interpolation-slider" id="interpolation-slider">
-<div id="interpolation-value" class="interpolation-value">50%</div>
+<!-- ============================================================ -->
+<!-- TOOLS & EXPERIMENTS -->
+<!-- ============================================================ -->
 
-<script>
-  const slider = document.getElementById('interpolation-slider');
-  const display = document.getElementById('interpolation-value');
-  slider.addEventListener('input', function() {
-    display.textContent = this.value + '%';
-  });
-</script>
+::: {.section-container}
+
+## Tools & Planned Experiments {.section-title}
+
+::: {.content-text}
+
+**Mapping & Localization**
+
+| Tool | Role | Status |
+|---|---|---|
+| slam_toolbox | Online async SLAM, loop closure | In progress |
+| nav2 AMCL | Map-based localization for race laps | Planned |
+| robot_localization | EKF fusion of LiDAR + IMU + VIO | Planned |
+| OpenVINS | Visual-inertial odometry on D435i | Planned |
+
+**Planning & Control**
+
+| Tool | Role | Status |
+|---|---|---|
+| TUM Raceline Optimizer | Minimum-curvature QP raceline | Planned |
+| CVXPY | Velocity profile optimization | Planned |
+| Pure Pursuit | Baseline waypoint tracking controller | In progress |
+| acados / CasADi | MPCC online optimization (stretch goal) | Stretch |
+
+**Experiments**
+
+1. **SLAM quality vs. speed** — does driving faster during the mapping lap degrade map quality enough to hurt localization on race laps?
+2. **Raceline vs. centerline** — quantify lap time improvement from the optimized raceline over naive centerline following.
+3. **LiDAR vs. VIO localization** — compare AMCL and OpenVINS pose drift at 2, 4, and 6 m/s. Does EKF fusion of both outperform either alone?
+4. **Pure pursuit vs. MPCC** — if time permits, compare lap times and tracking error between the two controllers on the same raceline.
 
 :::
 
@@ -212,13 +218,12 @@ interactive slider here. The example below shows how to set one up.
 
 ::: {.content-text}
 
-Here are some related works in this area:
+- [Heilmeier et al. (2020)](https://github.com/TUMFTM/global_racetrajectory_optimization) present the TUM global raceline optimizer, a minimum-curvature QP formulation we adopt for offline raceline generation.
+- [Stahl et al. (2019)](https://arxiv.org/abs/1905.05150) introduce minimum-time lap optimization with friction circle constraints, motivating our CVXPY velocity profile.
+- [Geneva et al. (2020)](https://github.com/rpng/open_vins) present OpenVINS, the open-source VIO system we use for camera-based localization on the D435i.
+- [Macenski et al. (2021)](https://arxiv.org/abs/2109.07636) describe slam_toolbox, our mapping and localization backend.
+- [Sezer & Gokasan (2012)](https://ieeexplore.ieee.org/document/6315217) introduce the Follow the Gap reactive algorithm our disparity extender builds on.
 
-- [Related Paper 1](https://example.com) introduces an idea similar to ours for [topic].
-- [Related Paper 2](https://example.com) also addresses [problem] using [approach].
-- [Related Paper 3](https://example.com) proposes [technique] which is complementary to our method.
-
-Check out [this survey](https://example.com) for a comprehensive overview of the field.
 :::
 
 :::
@@ -233,10 +238,10 @@ Check out [this survey](https://example.com) for a comprehensive overview of the
 ## BibTeX {.section-title}
 
 ```bibtex
-@article{yourname2026project,
-  author    = {Author One and Author Two and Author Three},
-  title     = {Your Project Title Here},
-  journal   = {Conference or Journal Name},
+@article{girish2026f1tenth,
+  author    = {Ravi Girish and Teammate Two and Teammate Three},
+  title     = {F1Tenth Autonomous Racing Stack: On-the-Fly SLAM, Raceline Optimization, and Visual-Inertial Odometry},
+  journal   = {ECE 484 Course Project, University of Illinois Urbana-Champaign},
   year      = {2026},
 }
 ```
